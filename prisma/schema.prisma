@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model users {
+  user_id     Int       @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  email       String    @unique @db.VarChar(100)
+  role        String    @db.VarChar(20)
+  password    String    @db.VarChar(255)
+  created_at  DateTime  @default(now())
+  bookings    bookings[]
+  approved    bookings[] @relation("approvedBookings")
+}
+
+model resource_types {
+  resource_type_id Int        @id @default(autoincrement())
+  type_name        String     @db.VarChar(100)
+  resources        resources[]
+}
+
+model buildings {
+  building_id     Int        @id @default(autoincrement())
+  building_name   String     @db.VarChar(100)
+  building_number String     @db.VarChar(50)
+  total_floors    Int
+  resources        resources[]
+}
+
+model resources {
+  resource_id       Int            @id @default(autoincrement())
+  resource_name     String         @db.VarChar(100)
+  floor_number      Int
+  description       String?
+  resource_type_id  Int
+  building_id       Int
+  resource_type     resource_types @relation(fields: [resource_type_id], references: [resource_type_id])
+  building          buildings      @relation(fields: [building_id], references: [building_id])
+  facilities        facilities[]
+  maintenance       maintenance[]
+  bookings          bookings[]
+  cupboards         cupboards[]
+}
+
+model facilities {
+  facility_id  Int       @id @default(autoincrement())
+  facility_name String   @db.VarChar(100)
+  details      String?
+  resource_id  Int
+  resource     resources @relation(fields: [resource_id], references: [resource_id])
+}
+
+model maintenance {
+  maintenance_id   Int       @id @default(autoincrement())
+  maintenance_type String    @db.VarChar(100)
+  scheduled_date   DateTime
+  status           String    @db.VarChar(20)
+  notes            String?
+  resource_id      Int
+  resource         resources @relation(fields: [resource_id], references: [resource_id])
+}
+
+model bookings {
+  booking_id     Int       @id @default(autoincrement())
+  start_datetime DateTime
+  end_datetime   DateTime
+  status         String    @db.VarChar(20)
+  created_at     DateTime  @default(now())
+  resource_id    Int
+  user_id        Int
+  approver_id    Int?
+  resource       resources @relation(fields: [resource_id], references: [resource_id])
+  user           users     @relation(fields: [user_id], references: [user_id])
+  approver       users?    @relation("approvedBookings", fields: [approver_id], references: [user_id])
+}
+
+model cupboards {
+  cupboard_id    Int       @id @default(autoincrement())
+  cupboard_name  String    @db.VarChar(100)
+  total_shelves  Int
+  resource_id    Int
+  resource       resources @relation(fields: [resource_id], references: [resource_id])
+  shelves        shelves[]
+}
+
+model shelves {
+  shelf_id      Int       @id @default(autoincrement())
+  shelf_number  Int
+  capacity      Int
+  description   String?
+  cupboard_id   Int
+  cupboard      cupboards @relation(fields: [cupboard_id], references: [cupboard_id])
+}
