@@ -1,133 +1,198 @@
 import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import BookingClient from "../student/Book_resources/BookingClient";
+import Link from "next/link";
+import MaintenanceTasks from "./MaintenanceTasks";
 
 export default async function StaffPage() {
-  await requireRole("STAFF");
+    const user = await requireRole(["STAFF", "MAINTENANCE"]);
+    const now = new Date();
 
-  return (
-    <div>
-      <div className="row align-items-center mb-5">
-        <div className="col">
-          <h1 className="h2 fw-bold text-dark mb-1">Staff Dashboard</h1>
-          <p className="text-secondary mb-0">Facilitate and manage resource usage.</p>
-        </div>
-      </div>
+    // Fetch resources with their approved bookings to determine availability status
+    const resources = await prisma.resources.findMany({
+        include: {
+            resource_type: true,
+            bookings: {
+                where: {
+                    status: "APPROVED",
+                    end_datetime: { gte: now },
+                },
+            },
+        },
+    });
 
-      <div className="row g-4">
-        <div className="col-md-3">
-          <a href="#" className="card bg-primary text-white border-0 shadow-sm h-100 text-decoration-none transition-transform hover-scale">
-            <div className="card-body p-4 d-flex flex-column justify-content-between">
-              <div className="mb-4">
-                <i className="bi bi-calendar-check fs-1 opacity-50"></i>
-              </div>
-              <div>
-                <h5 className="fw-bold">Reserve Resource</h5>
-                <p className="small mb-0 opacity-75">Book equipment for classes or personal use</p>
-              </div>
+    // Fetch user's bookings
+    const myBookings = await prisma.bookings.findMany({
+        where: { user_id: user.user_id },
+        include: { resource: true },
+        orderBy: { start_datetime: "desc" },
+    });
+
+    // Fetch maintenance tasks if the user is in MAINTENANCE role
+    const maintenanceTasks = user.role === "MAINTENANCE" || user.role === "STAFF"
+        ? await prisma.maintenance.findMany({
+            where: {
+                status: { in: ["PENDING", "SCHEDULED", "IN_PROGRESS"] }
+            },
+            include: { resource: true },
+            orderBy: { scheduled_date: "asc" }
+        })
+        : [];
+
+    const activeBookings = myBookings.filter(
+        (b) => b.status === "APPROVED" && new Date(b.end_datetime) > now
+    );
+
+    const upcomingReturn = activeBookings.sort(
+        (a, b) =>
+            new Date(a.end_datetime).getTime() - new Date(b.end_datetime).getTime()
+    )[0];
+
+    return (
+        <div className="container-fluid pb-5">
+            <div className="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <h1 className="h2 fw-bold text-dark mb-1">Staff Portal</h1>
+                    <p className="text-secondary mb-0">
+                        Manage your bookings and {user.role === "MAINTENANCE" ? "maintenance tasks" : "resources"}.
+                    </p>
+                </div>
+                <div className="d-flex gap-2">
+                    <BookingClient
+                        resources={resources}
+                        trigger={
+                            <button className="btn btn-primary shadow-sm rounded-pill px-4">
+                                <i className="bi bi-plus-lg me-2"></i> New Booking
+                            </button>
+                        }
+                    />
+                </div>
             </div>
-          </a>
-        </div>
 
-        <div className="col-md-3">
-          <a href="#" className="card bg-info text-white border-0 shadow-sm h-100 text-decoration-none transition-transform hover-scale">
-            <div className="card-body p-4 d-flex flex-column justify-content-between">
-              <div className="mb-4">
-                <i className="bi bi-list-check fs-1 opacity-50"></i>
-              </div>
-              <div>
-                <h5 className="fw-bold">My Reservations</h5>
-                <p className="small mb-0 opacity-75">View and manage your active bookings</p>
-              </div>
+            <div className="row g-4">
+                {/* Main Content Area */}
+                <div className="col-lg-8">
+                    {user.role === "MAINTENANCE" || user.role === "STAFF" ? (
+                        <div className="mb-5">
+                            <MaintenanceTasks initialTasks={maintenanceTasks} />
+                        </div>
+                    ) : null}
+
+                    <div className="mb-4">
+                        <h4 className="fw-bold text-dark mb-3">Available Resources</h4>
+                        <BookingClient resources={resources} />
+                    </div>
+                </div>
+
+                {/* Sidebar Area - My Bookings */}
+                <div className="col-lg-4">
+                    {upcomingReturn && (
+                        <div
+                            className="card shadow-sm border-0 bg-primary text-white mb-4"
+                            style={{
+                                background:
+                                    "linear-gradient(135deg, var(--primary-color), var(--secondary-color))",
+                            }}
+                        >
+                            <div className="card-body p-4">
+                                <h5 className="card-title fw-bold mb-3">
+                                    <i className="bi bi-clock-history me-2"></i>Upcoming Return
+                                </h5>
+                                <div className="p-3 bg-white bg-opacity-25 rounded-3 mb-2">
+                                    <h6 className="fw-bold mb-1">
+                                        {upcomingReturn.resource.resource_name}
+                                    </h6>
+                                    <small className="d-block text-white-50">
+                                        Due:{" "}
+                                        {new Date(upcomingReturn.end_datetime).toLocaleDateString()}{" "}
+                                        {new Date(upcomingReturn.end_datetime).toLocaleTimeString(
+                                            [],
+                                            { hour: "2-digit", minute: "2-digit" }
+                                        )}
+                                    </small>
+                                </div>
+                                <p className="small mb-0 mt-3 opacity-75">
+                                    Ensure resources are returned in good condition.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="glass-card">
+                        <div className="card-header bg-transparent border-bottom py-3">
+                            <h6 className="mb-0 fw-bold">My Booking History</h6>
+                        </div>
+                        <div className="card-body p-0">
+                            <ul className="list-group list-group-flush small bg-transparent">
+                                {myBookings.slice(0, 5).map((booking) => {
+                                    const isOverdue =
+                                        booking.status === "APPROVED" &&
+                                        new Date(booking.end_datetime) < now;
+
+                                    let statusBadge;
+                                    if (booking.status === "PENDING") {
+                                        statusBadge = (
+                                            <span className="badge bg-warning bg-opacity-10 text-warning text-dark px-2 py-1">
+                                                Pending
+                                            </span>
+                                        );
+                                    } else if (booking.status === "REJECTED") {
+                                        statusBadge = (
+                                            <span className="badge bg-danger bg-opacity-10 text-danger px-2 py-1">
+                                                Rejected
+                                            </span>
+                                        );
+                                    } else if (isOverdue) {
+                                        statusBadge = (
+                                            <span className="badge bg-danger bg-opacity-10 text-danger px-2 py-1">
+                                                Overdue
+                                            </span>
+                                        );
+                                    } else {
+                                        statusBadge = (
+                                            <span className="badge bg-success bg-opacity-10 text-success px-2 py-1">
+                                                Active
+                                            </span>
+                                        );
+                                    }
+
+                                    return (
+                                        <li
+                                            key={booking.booking_id}
+                                            className="list-group-item px-4 py-3 bg-transparent border-bottom"
+                                        >
+                                            <div className="d-flex justify-content-between mb-1">
+                                                <span className="fw-semibold">
+                                                    {booking.resource.resource_name}
+                                                </span>
+                                                <span className="text-secondary opacity-75">
+                                                    {new Date(
+                                                        booking.start_datetime
+                                                    ).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            {statusBadge}
+                                        </li>
+                                    );
+                                })}
+                                {myBookings.length === 0 && (
+                                    <li className="list-group-item px-4 py-3 text-center text-muted bg-transparent">
+                                        No bookings found.
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+                        <div className="card-footer bg-transparent border-0 text-center py-3">
+                            <Link
+                                href="/staff/history"
+                                className="text-decoration-none text-primary fw-semibold small"
+                            >
+                                View Full History <i className="bi bi-arrow-right ms-1"></i>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </a>
         </div>
-
-        <div className="col-md-3">
-          <a href="#" className="card bg-success text-white border-0 shadow-sm h-100 text-decoration-none transition-transform hover-scale">
-            <div className="card-body p-4 d-flex flex-column justify-content-between">
-              <div className="mb-4">
-                <i className="bi bi-search fs-1 opacity-50"></i>
-              </div>
-              <div>
-                <h5 className="fw-bold">Browse Catalog</h5>
-                <p className="small mb-0 opacity-75">Search the full inventory of resources</p>
-              </div>
-            </div>
-          </a>
-        </div>
-
-        <div className="col-md-3">
-          <a href="#" className="card bg-secondary text-white border-0 shadow-sm h-100 text-decoration-none transition-transform hover-scale">
-            <div className="card-body p-4 d-flex flex-column justify-content-between">
-              <div className="mb-4">
-                <i className="bi bi-question-circle fs-1 opacity-50"></i>
-              </div>
-              <div>
-                <h5 className="fw-bold">Help & Support</h5>
-                <p className="small mb-0 opacity-75">Report issues or contact admin</p>
-              </div>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <h4 className="fw-bold mb-3">Resource Status Overview</h4>
-        <div className="card shadow-sm border-0">
-          <div className="card-body">
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Resource Name</th>
-                    <th>Category</th>
-                    <th>Availability</th>
-                    <th>Next Available</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <span className="fw-semibold">Lecture Hall 101</span>
-                    </td>
-                    <td>Room</td>
-                    <td><span className="badge bg-success">Available</span></td>
-                    <td>Now</td>
-                    <td><button className="btn btn-sm btn-primary">Book</button></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="fw-semibold">Physics Lab Kit A</span>
-                    </td>
-                    <td>Equipment</td>
-                    <td><span className="badge bg-danger">Booked</span></td>
-                    <td>Today, 4:00 PM</td>
-                    <td><button className="btn btn-sm btn-secondary" disabled>Waitlist</button></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="fw-semibold">Projector Portable</span>
-                    </td>
-                    <td>AV</td>
-                    <td><span className="badge bg-warning text-dark">Maintaining</span></td>
-                    <td>Unknown</td>
-                    <td><button className="btn btn-sm btn-outline-danger" disabled>Report</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        .hover-scale {
-          transition: transform 0.2s;
-        }
-        .hover-scale:hover {
-          transform: translateY(-5px);
-        }
-      `}</style>
-    </div>
-  );
+    );
 }

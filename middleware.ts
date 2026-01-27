@@ -11,7 +11,6 @@ export function middleware(req: NextRequest) {
   if (path.startsWith("/staff") && role !== "STAFF") {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
-
   if (path.startsWith("/student") && role !== "STUDENT") {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }

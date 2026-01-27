@@ -31,12 +31,12 @@ export default async function StudentPage() {
 
   // Filter for upcoming return
   const activeBookings = myBookings.filter(
-    (b) => b.status === "APPROVED" && new Date(b.end_datetime) > now
+    (b) => b.status === "APPROVED" && new Date(b.end_datetime) > now,
   );
 
   const upcomingReturn = activeBookings.sort(
     (a, b) =>
-      new Date(a.end_datetime).getTime() - new Date(b.end_datetime).getTime()
+      new Date(a.end_datetime).getTime() - new Date(b.end_datetime).getTime(),
   )[0];
 
   return (
@@ -48,21 +48,27 @@ export default async function StudentPage() {
             Book resources and track your requests.
           </p>
         </div>
-        <button className="btn btn-primary shadow-sm rounded-pill px-4">
+        {/* <button className="btn btn-primary shadow-sm rounded-pill px-4">
           <i className="bi bi-plus-lg me-2"></i> New Booking
-        </button>
+        </button> */}
+        <BookingClient
+          resources={resources}
+          trigger={
+            <button className="btn btn-primary shadow-sm rounded-pill px-4">
+              <i className="bi bi-plus-lg me-2"></i> New Booking
+            </button>
+          }
+        />
       </div>
 
       <div className="row g-4">
         {/* Main Content Area - Resources */}
         <div className="col-lg-8">
-
-
           <BookingClient resources={resources} />
         </div>
 
         {/* Sidebar Area - My Bookings */}
-        <div className="col-lg-4">
+        <div className="col-lg-4 ">
           {upcomingReturn && (
             <div
               className="card shadow-sm border-0 bg-primary text-white mb-4"
@@ -84,7 +90,7 @@ export default async function StudentPage() {
                     {new Date(upcomingReturn.end_datetime).toLocaleDateString()}{" "}
                     {new Date(upcomingReturn.end_datetime).toLocaleTimeString(
                       [],
-                      { hour: "2-digit", minute: "2-digit" }
+                      { hour: "2-digit", minute: "2-digit" },
                     )}
                   </small>
                 </div>
@@ -95,7 +101,7 @@ export default async function StudentPage() {
             </div>
           )}
 
-          <div className="glass-card">
+          <div className="glass-card mt-5">
             <div className="card-header bg-transparent border-bottom py-3">
               <h6 className="mb-0 fw-bold">My Booking History</h6>
             </div>
@@ -123,7 +129,7 @@ export default async function StudentPage() {
                     );
                   } else if (isOverdue) {
                     statusBadge = (
-                      <span className="badge bg-danger bg-opacity-10 text-danger">
+                      <span className="badge bg-secondary bg-opacity-10 text-dark">
                         Overdue
                       </span>
                     );
@@ -147,7 +153,7 @@ export default async function StudentPage() {
                         </span>
                         <span className="text-secondary">
                           {new Date(
-                            booking.start_datetime
+                            booking.start_datetime,
                           ).toLocaleDateString()}
                         </span>
                       </div>

@@ -101,6 +101,13 @@ export default function AddResourceForm({
                         <input type="number" className="form-control" id="floorNumber" name="floorNumber" required placeholder="e.g. 2" />
                     </div>
 
+                    <div className="col-md-6">
+                        <label htmlFor="maintenanceInterval" className="form-label fw-semibold text-secondary small">
+                            Maintenance Interval (Days)
+                        </label>
+                        <input type="number" className="form-control" id="maintenanceInterval" name="maintenanceInterval" defaultValue="30" placeholder="e.g. 30" />
+                    </div>
+
                     <div className="col-md-12">
                         <label htmlFor="description" className="form-label fw-semibold text-secondary small">
                             Description (Optional)

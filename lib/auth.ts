@@ -17,8 +17,14 @@ export async function requireAuth() {
   return user;
 }
 
-export async function requireRole(role: string) {
+export async function requireRole(role: string | string[]) {
   const user = await requireAuth();
-  if (user.role !== role) redirect("/dashboard");
+
+  if (Array.isArray(role)) {
+    if (!role.includes(user.role)) redirect("/dashboard");
+  } else {
+    if (user.role !== role) redirect("/dashboard");
+  }
+
   return user;
 }

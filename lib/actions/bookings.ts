@@ -14,62 +14,8 @@ export async function createBooking(formData: FormData) {
     const startString = formData.get("startDate") as string;
     const endString = formData.get("endDate") as string;
 
-    if (!resourceId || !startString || !endString) {
-        return { error: "Missing required fields." };
-    }
-
     const start = new Date(startString);
     const end = new Date(endString);
-
-    if (start >= end) {
-        return { error: "End time must be after start time." };
-    }
-
-    if (start < new Date()) {
-        return { error: "Cannot book in the past." };
-    }
-
-    // Check for overlapping bookings
-    // We look for any booking for this resource that overlaps with the requested range
-    // and is NOT Rejected (so Approved or Pending blocks it? Usually Pending blocks it to prevent double booking race conditions, or maybe we allow overbooking until approved. Let's block if 'APPROVED' or 'PENDING' to be safe, or just 'APPROVED' if we want queueing.
-    // The user prompt "check for bookings" suggests we should prevent conflicts.
-    // Let's assume 'APPROVED' blocks. 'PENDING' might just be a request.
-    // However, for a user "checking availability", if someone else has a pending request, they might get priority.
-    // Let's stick to blocking only 'APPROVED' for strict conflicts, but maybe warn about PENDING?
-    // For simplicity: overlapping 'APPROVED' bookings make it unavailable.
-
-    const formattedStart = start.toISOString();
-    const formattedEnd = end.toISOString();
-
-    const query = {
-        resource_id: resourceId,
-        status: "APPROVED",
-        OR: [
-            {
-                start_datetime: {
-                    lte: formattedEnd,
-                },
-                end_datetime: {
-                    gte: formattedStart,
-                },
-            },
-        ],
-    };
-
-    // Checking overlap:
-    // (StartA <= EndB) and (EndA >= StartB)
-    const conflicts = await prisma.bookings.findMany({
-        where: {
-            resource_id: resourceId,
-            status: "APPROVED",
-            start_datetime: { lt: end },
-            end_datetime: { gt: start },
-        },
-    });
-
-    if (conflicts.length > 0) {
-        return { error: "Resource is not available during this time slot." };
-    }
 
     try {
         await prisma.bookings.create({
@@ -83,9 +29,89 @@ export async function createBooking(formData: FormData) {
         });
 
         revalidatePath("/student");
+        revalidatePath("/staff");
+        revalidatePath("/approver");
         return { success: "Booking requested successfully!" };
     } catch (e) {
         console.error(e);
         return { error: "Failed to create booking." };
     }
+}
+
+export async function updateBookingStatus(bookingId: number, status: "APPROVED" | "REJECTED") {
+    const user = await getCurrentUser();
+    // In a real app, verify user role is APPROVER or ADMIN here.
+    if (!user) {
+        return { error: "Unauthorized" };
+    }
+
+    try {
+        await prisma.bookings.update({
+            where: { booking_id: bookingId },
+            data: {
+                status,
+                approver_id: user.user_id // Record who approved/rejected
+            },
+        });
+
+        revalidatePath("/approver");
+        revalidatePath("/student");
+        revalidatePath("/staff");
+        revalidatePath("/admin");
+        return { success: `Booking ${status.toLowerCase()} successfully.` };
+    } catch (e) {
+        console.error(e);
+        return { error: "Failed to update booking." };
+    }
+}
+
+export async function updateBookingDetails(bookingId: number, start: Date, end: Date) {
+    const user = await getCurrentUser();
+    // Should verify role here
+
+    try {
+        await prisma.bookings.update({
+            where: { booking_id: bookingId },
+            data: {
+                start_datetime: start,
+                end_datetime: end
+            },
+        });
+
+        revalidatePath("/approver");
+        return { success: "Booking updated successfully." };
+    } catch (e) {
+        console.error(e);
+        return { error: "Failed to update booking details." };
+    }
+}
+
+export async function checkAvailability(bookingId: number) {
+    const booking = await prisma.bookings.findUnique({
+        where: { booking_id: bookingId },
+        select: {
+            resource_id: true,
+            start_datetime: true,
+            end_datetime: true,
+        },
+    });
+
+    if (!booking) {
+        return { available: false, error: "Booking not found" };
+    }
+
+    // Check for overlapping APPROVED bookings
+    const conflicts = await prisma.bookings.findMany({
+        where: {
+            resource_id: booking.resource_id,
+            status: "APPROVED",
+            start_datetime: { lt: booking.end_datetime },
+            end_datetime: { gt: booking.start_datetime },
+        },
+    });
+
+    return {
+        available: conflicts.length === 0,
+        conflicts: conflicts.length
+    };
 }

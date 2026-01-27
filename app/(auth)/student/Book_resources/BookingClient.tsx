@@ -19,13 +19,19 @@ type Resource = {
 
 export default function BookingResources({
   resources,
+  trigger,
 }: {
   resources: Resource[];
+  trigger?: React.ReactNode;
 }) {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(
     null
   );
-  const [showModal, setShowModal] = useState(false);
+  // Controls the standalone form modal (used when NO trigger is present)
+  const [isInlineFormModalOpen, setIsInlineFormModalOpen] = useState(false);
+  // Controls the main wrapper modal (used when trigger IS present)
+  const [isTriggerModalOpen, setIsTriggerModalOpen] = useState(false);
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -33,24 +39,39 @@ export default function BookingResources({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Default dates for the inputs (optional)
-  // const [start, setStart] = useState("");
-  // const [end, setEnd] = useState("");
-
   const handleBookClick = (resource: Resource) => {
     setSelectedResource(resource);
-    setShowModal(true);
     setMessage(null);
+    if (trigger) {
+      // In trigger mode, we are already in a modal. 
+      // Setting selectedResource switches the view to the form.
+    } else {
+      // In inline mode, we open the separate form modal.
+      setIsInlineFormModalOpen(true);
+    }
   };
+
   const filteredResources = resources.filter(
     (r) =>
       r.resource_name.toLowerCase().includes(search.toLowerCase()) ||
       r.resource_type.type_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseInlineForm = () => {
+    setIsInlineFormModalOpen(false);
     setSelectedResource(null);
+  };
+
+  const handleCloseTriggerModal = () => {
+    setIsTriggerModalOpen(false);
+    setSelectedResource(null);
+    setSearch("");
+    setMessage(null);
+  };
+
+  const handleBackToList = () => {
+    setSelectedResource(null);
+    setMessage(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -66,17 +87,19 @@ export default function BookingResources({
       setMessage({ type: "error", text: res.error });
     } else if (res.success) {
       setMessage({ type: "success", text: res.success });
-      // Close modal after short delay? Or let user close.
+      // Close modal after short delay
       setTimeout(() => {
-        handleCloseModal();
+        if (trigger) {
+          handleCloseTriggerModal();
+        } else {
+          handleCloseInlineForm();
+        }
       }, 2000);
     }
   };
 
-  // Helper to check availability for "Now" rendering in the list
   const isAvailableNow = (resource: Resource) => {
     const now = new Date();
-    // Check if any APPROVED booking overlaps with NOW
     return !resource.bookings.some(
       (b) =>
         b.status === "APPROVED" &&
@@ -85,10 +108,14 @@ export default function BookingResources({
     );
   };
 
-  return (
+  // --- Render Helpers ---
+
+  const renderResourceList = () => (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="fw-bold text-dark mb-0">Available Resources</h4>
+        <h4 className={`fw-bold text-dark mb-0 ${trigger ? "h5" : ""}`}>
+          {trigger ? "Select a Resource" : "Available Resources"}
+        </h4>
         <div className="input-group w-auto">
           <span className="input-group-text bg-white border-end-0">
             <i className="bi bi-search text-muted"></i>
@@ -103,64 +130,201 @@ export default function BookingResources({
         </div>
       </div>
 
-      <div className="glass-card mb-4 overflow-hidden">
-        <div className="card-body p-0">
+      <div className={trigger ? "list-group-wrapper" : "glass-card mb-4 overflow-hidden"}>
+        <div className={trigger ? "" : "card-body p-0"}>
           <div className="list-group list-group-flush">
             {filteredResources.map((resource) => {
               const available = isAvailableNow(resource);
-
               return (
                 <div
                   key={resource.resource_id}
-                  className="list-group-item p-4 d-flex align-items-center justify-content-between bg-transparent"
+                  className="list-group-item p-3 d-flex align-items-center justify-content-between bg-transparent border-bottom"
                 >
                   <div className="d-flex align-items-center">
                     <div
-                      className="bg-white rounded p-3 me-3 text-center d-flex align-items-center justify-content-center shadow-sm"
-                      style={{ width: "60px", height: "60px" }}
+                      className="bg-white rounded p-2 me-3 text-center d-flex align-items-center justify-content-center shadow-sm"
+                      style={{ width: "50px", height: "50px" }}
                     >
-                      <i className="bi bi-box-seam fs-3 text-primary"></i>
+                      <i className="bi bi-box-seam fs-4 text-primary"></i>
                     </div>
                     <div>
-                      <h5 className="mb-1 fw-bold text-dark">
+                      <h6 className="mb-0 fw-bold text-dark">
                         {resource.resource_name}
-                      </h5>
-                      <p className="mb-0 text-muted small">
-                        {resource.resource_type.type_name} •{" "}
-                        {resource.description || "No description"}
-                      </p>
-                      {available ? (
-                        <span className="badge bg-success bg-opacity-10 text-success mt-2">
-                          Available Now
-                        </span>
-                      ) : (
-                        <span className="badge bg-secondary bg-opacity-10 text-secondary mt-2">
-                          In Use
-                        </span>
-                      )}
+                      </h6>
+                      <small className="text-muted">
+                        {resource.resource_type.type_name}
+                      </small>
+                      <div className="mt-1">
+                        {available ? (
+                          <span className="badge bg-success bg-opacity-10 text-success rounded-pill" style={{ fontSize: '0.7em' }}>
+                            Available
+                          </span>
+                        ) : (
+                          <span className="badge bg-secondary bg-opacity-10 text-secondary rounded-pill" style={{ fontSize: '0.7em' }}>
+                            In Use
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <button
                     onClick={() => handleBookClick(resource)}
-                    className="btn btn-sm btn-outline-primary rounded-pill"
+                    className="btn btn-sm btn-outline-primary rounded-pill px-3"
                   >
-                    Check & Book
+                    Select
                   </button>
                 </div>
               );
             })}
 
             {resources.length === 0 && (
-              <div className="p-5 text-center text-muted">
+              <div className="p-4 text-center text-muted">
                 No resources found.
               </div>
             )}
           </div>
         </div>
       </div>
+    </>
+  );
 
-      {/* Booking Modal */}
-      {showModal && selectedResource && (
+  const renderBookingForm = () => (
+    <>
+      {trigger && (
+        <button
+          type="button"
+          className="btn btn-link text-decoration-none p-0 mb-3 text-muted"
+          onClick={handleBackToList}
+        >
+          <i className="bi bi-arrow-left me-1"></i> Back to list
+        </button>
+      )}
+
+      {!trigger && (
+        <p className="text-muted small mb-4">
+          Select your desired date and time. Availability will be checked upon submission.
+        </p>
+      )}
+
+      {message && (
+        <div
+          className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"
+            } mb-3`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="hidden"
+          name="resourceId"
+          value={selectedResource!.resource_id}
+        />
+        <div className="mb-3">
+          <label className="form-label small fw-bold text-secondary">
+            Start Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            name="startDate"
+            className="form-control"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="form-label small fw-bold text-secondary">
+            End Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            name="endDate"
+            className="form-control"
+          />
+        </div>
+
+        <div className="d-grid gap-2">
+          <button
+            type="submit"
+            className="btn btn-primary rounded-pill fw-bold"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Creating Request...
+              </span>
+            ) : (
+              "Confirm Booking Request"
+            )}
+          </button>
+          <button
+            type="button"
+            className="btn btn-light rounded-pill text-muted"
+            onClick={trigger ? handleCloseTriggerModal : handleCloseInlineForm}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </>
+  );
+
+  // --- Main Render ---
+
+  if (trigger) {
+    return (
+      <>
+        <div onClick={() => setIsTriggerModalOpen(true)} className="d-inline-block">
+          {trigger}
+        </div>
+
+        {isTriggerModalOpen && (
+          <div
+            className="modal fade show d-block"
+            tabIndex={-1}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+              <div
+                className="modal-content border-0 shadow-lg"
+                style={{ borderRadius: "1rem" }}
+              >
+                <div className="modal-header border-0 pb-0">
+                  <h5 className="modal-title fw-bold">
+                    {selectedResource
+                      ? `Book ${selectedResource.resource_name}`
+                      : "New Booking"}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={handleCloseTriggerModal}
+                  ></button>
+                </div>
+                <div className="modal-body p-4 pt-3">
+                  {/* If a resource is selected, show Form. Else show List */}
+                  {selectedResource ? renderBookingForm() : renderResourceList()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Inline Mode (Original Behavior)
+  return (
+    <>
+      {renderResourceList()}
+
+      {/* Booking Form Modal */}
+      {isInlineFormModalOpen && selectedResource && (
         <div
           className="modal fade show d-block"
           tabIndex={-1}
@@ -178,86 +342,11 @@ export default function BookingResources({
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={handleCloseModal}
+                  onClick={handleCloseInlineForm}
                 ></button>
               </div>
               <div className="modal-body p-4">
-                <p className="text-muted small mb-4">
-                  Select your desired date and time. Availability will be
-                  checked upon submission.
-                </p>
-
-                {message && (
-                  <div
-                    className={`alert ${message.type === "success"
-                        ? "alert-success"
-                        : "alert-danger"
-                      } mb-3`}
-                  >
-                    {message.text}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                  <input
-                    type="hidden"
-                    name="resourceId"
-                    value={selectedResource.resource_id}
-                  />
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-secondary">
-                      Start Date & Time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      name="startDate"
-                      className="form-control"
-                      required
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label small fw-bold text-secondary">
-                      End Date & Time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      name="endDate"
-                      className="form-control"
-                      required
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                  </div>
-
-                  <div className="d-grid gap-2">
-                    <button
-                      type="submit"
-                      className="btn btn-primary rounded-pill fw-bold"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <span>
-                          <span
-                            className="spinner-border spinner-border-sm me-2"
-                            role="status"
-                            aria-hidden="true"
-                          ></span>
-                          Creating Request...
-                        </span>
-                      ) : (
-                        "Confirm Booking Request"
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-light rounded-pill text-muted"
-                      onClick={handleCloseModal}
-                      disabled={isSubmitting}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
+                {renderBookingForm()}
               </div>
             </div>
           </div>

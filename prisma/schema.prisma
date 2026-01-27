@@ -43,6 +43,7 @@ model resources {
   resource_name     String         @db.VarChar(100)
   floor_number      Int
   description       String?
+  maintenance_interval_days Int?   @default(30)
   resource_type_id  Int
   building_id       Int
   resource_type     resource_types @relation(fields: [resource_type_id], references: [resource_type_id])
