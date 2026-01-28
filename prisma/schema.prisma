@@ -22,6 +22,8 @@ model users {
   created_at  DateTime  @default(now())
   bookings    bookings[]
   approved    bookings[] @relation("approvedBookings")
+  feedbacks   feedback[]
+  assignedTasks maintenance[] @relation("assignedTasks")
 }
 
 model resource_types {
@@ -52,6 +54,7 @@ model resources {
   maintenance       maintenance[]
   bookings          bookings[]
   cupboards         cupboards[]
+  feedbacks         feedback[]
 }
 
 model facilities {
@@ -70,6 +73,27 @@ model maintenance {
   notes            String?
   resource_id      Int
   resource         resources @relation(fields: [resource_id], references: [resource_id])
+  
+  assigned_to_id   Int?
+  assigned_to      users?    @relation("assignedTasks", fields: [assigned_to_id], references: [user_id])
+  
+  feedback_id      Int?
+  feedback         feedback? @relation(fields: [feedback_id], references: [feedback_id])
+}
+
+model feedback {
+  feedback_id  Int       @id @default(autoincrement())
+  message      String    @db.Text
+  status       String    @default("PENDING") @db.VarChar(20)
+  created_at   DateTime  @default(now())
+  
+  user_id      Int
+  user         users     @relation(fields: [user_id], references: [user_id])
+  
+  resource_id  Int?
+  resource     resources? @relation(fields: [resource_id], references: [resource_id])
+  
+  maintenance  maintenance[]
 }
 
 model bookings {

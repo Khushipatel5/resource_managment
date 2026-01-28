@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import InventoryClient from "./InventoryClient";
+import InventoryClient from "@/components/admin/InventoryClient";
 
 export default async function AdminInventoryPage() {
     await requireRole("ADMIN");

@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import BookingClient from "./Book_resources/BookingClient";
+import BookingClient from "@/components/student/BookingClient";
 import Link from "next/link";
 
 export default async function StudentPage() {
@@ -48,17 +48,19 @@ export default async function StudentPage() {
             Book resources and track your requests.
           </p>
         </div>
-        {/* <button className="btn btn-primary shadow-sm rounded-pill px-4">
-          <i className="bi bi-plus-lg me-2"></i> New Booking
-        </button> */}
-        <BookingClient
-          resources={resources}
-          trigger={
-            <button className="btn btn-primary shadow-sm rounded-pill px-4">
-              <i className="bi bi-plus-lg me-2"></i> New Booking
-            </button>
-          }
-        />
+        <div className="d-flex gap-2 align-items-center">
+          <Link href="/student/feedback" className="btn btn-outline-primary shadow-sm rounded-pill px-4">
+            <i className="bi bi-chat-right-text me-2"></i> Give Feedback
+          </Link>
+          <BookingClient
+            resources={resources}
+            trigger={
+              <button className="btn btn-primary shadow-sm rounded-pill px-4">
+                <i className="bi bi-plus-lg me-2"></i> New Booking
+              </button>
+            }
+          />
+        </div>
       </div>
 
       <div className="row g-4">
@@ -168,12 +170,18 @@ export default async function StudentPage() {
                 )}
               </ul>
             </div>
-            <div className="card-footer bg-transparent border-0 text-center py-3">
+            <div className="card-footer bg-transparent border-0 d-flex justify-content-center gap-4 py-3">
               <Link
                 href="/student/View_resources"
                 className="text-decoration-none text-primary fw-semibold small"
               >
-                View All History
+                Booking History
+              </Link>
+              <Link
+                href="/student/feedback/history"
+                className="text-decoration-none text-success fw-semibold small"
+              >
+                Feedback History
               </Link>
             </div>
           </div>

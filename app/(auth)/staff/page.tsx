@@ -1,8 +1,8 @@
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import BookingClient from "../student/Book_resources/BookingClient";
+import BookingClient from "@/components/student/BookingClient";
 import Link from "next/link";
-import MaintenanceTasks from "./MaintenanceTasks";
+import MaintenanceTasks from "@/components/staff/MaintenanceTasks";
 
 export default async function StaffPage() {
     const user = await requireRole(["STAFF", "MAINTENANCE"]);
@@ -32,7 +32,8 @@ export default async function StaffPage() {
     const maintenanceTasks = user.role === "MAINTENANCE" || user.role === "STAFF"
         ? await prisma.maintenance.findMany({
             where: {
-                status: { in: ["PENDING", "SCHEDULED", "IN_PROGRESS"] }
+                status: { in: ["PENDING", "SCHEDULED", "IN_PROGRESS"] },
+                assigned_to_id: user.user_id
             },
             include: { resource: true },
             orderBy: { scheduled_date: "asc" }
@@ -182,12 +183,18 @@ export default async function StaffPage() {
                                 )}
                             </ul>
                         </div>
-                        <div className="card-footer bg-transparent border-0 text-center py-3">
+                        <div className="card-footer bg-transparent border-0 d-flex justify-content-center gap-4 py-3">
                             <Link
                                 href="/staff/history"
                                 className="text-decoration-none text-primary fw-semibold small"
                             >
-                                View Full History <i className="bi bi-arrow-right ms-1"></i>
+                                Booking History <i className="bi bi-arrow-right ms-1"></i>
+                            </Link>
+                            <Link
+                                href="/staff/history-tasks"
+                                className="text-decoration-none text-success fw-semibold small"
+                            >
+                                Maintenance History <i className="bi bi-check-circle ms-1"></i>
                             </Link>
                         </div>
                     </div>

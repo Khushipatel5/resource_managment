@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import BookingClient from "./BookingClient";
+import BookingClient from "@/components/student/BookingClient";
 
 export default async function BookResourcesPage() {
     const now = new Date();

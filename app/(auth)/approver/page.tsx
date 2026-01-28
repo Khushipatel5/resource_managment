@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import ApproverClient from "./ApproverClient";
+import ApproverClient from "@/components/approver/ApproverClient";
 
 export default async function ApproverPage() {
   const user = await requireRole("APPROVER");

@@ -65,6 +65,12 @@ export default function MaintenanceTasks({ initialTasks }: { initialTasks: any[]
                                 <tr key={task.maintenance_id} className="border-bottom-0">
                                     <td className="px-4 py-3">
                                         <div className="fw-semibold text-dark">{task.resource.resource_name}</div>
+                                        {task.notes && (
+                                            <div className="small text-muted mt-1 fst-italic">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                {task.notes}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="py-3">
                                         <span className="text-muted small">{task.maintenance_type}</span>

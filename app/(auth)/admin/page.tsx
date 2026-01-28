@@ -165,6 +165,12 @@ export default async function AdminPage() {
                   <i className="bi bi-boxes me-2"></i> Manage Inventory
                 </Link>
                 <Link
+                  href="/admin/feedbacks"
+                  className="btn btn-outline-primary text-start"
+                >
+                  <i className="bi bi-chat-left-text me-2"></i> Manage Feedback
+                </Link>
+                <Link
                   href="/admin/settings"
                   className="btn btn-outline-secondary text-start"
                 >

@@ -16,6 +16,18 @@ export async function updateMaintenanceStatus(maintenanceId: number, status: str
             }
         });
 
+        // If a task is linked to feedback, update feedback status
+        if (updatedTask.feedback_id) {
+            let feedbackStatus = "ASSIGNED";
+            if (status === "COMPLETED") feedbackStatus = "COMPLETED";
+            else if (status === "IN_PROGRESS") feedbackStatus = "IN_PROGRESS";
+
+            await prisma.feedback.update({
+                where: { feedback_id: updatedTask.feedback_id },
+                data: { status: feedbackStatus }
+            });
+        }
+
         // If a task is completed, schedule the next one automatically
         if (status === "COMPLETED" && updatedTask.resource.maintenance_interval_days) {
             await prisma.maintenance.create({

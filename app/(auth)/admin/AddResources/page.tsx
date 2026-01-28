@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import AddResourceForm from "./AddResourceForm";
+import AddResourceForm from "@/components/admin/AddResourceForm";
 import Link from "next/link";
 
 export default async function AddResourcesPage() {

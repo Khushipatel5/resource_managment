@@ -1,6 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import AdminBookingsClient from "./AdminBookingsClient";
+import AdminBookingsClient from "@/components/admin/AdminBookingsClient";
 
 export default async function AdminBookingsPage() {
     await requireRole("ADMIN");
