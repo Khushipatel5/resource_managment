@@ -13,6 +13,8 @@ export default async function StudentPage() {
   const resources = await prisma.resources.findMany({
     include: {
       resource_type: true,
+      building: true,
+      facilities: true,
       bookings: {
         where: {
           status: "APPROVED",

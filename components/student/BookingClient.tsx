@@ -6,10 +6,19 @@ import { createBooking } from "@/lib/actions/bookings";
 type Resource = {
   resource_id: number;
   resource_name: string;
+
   description: string | null;
+  floor_number: number;
+  building: {
+    building_name: string;
+    building_number: string;
+  };
   resource_type: {
     type_name: string;
   };
+  facilities: {
+    facility_name: string;
+  }[];
   bookings: {
     start_datetime: Date;
     end_datetime: Date;
@@ -54,7 +63,9 @@ export default function BookingResources({
   const filteredResources = resources.filter(
     (r) =>
       r.resource_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.resource_type.type_name.toLowerCase().includes(search.toLowerCase())
+      r.resource_type.type_name.toLowerCase().includes(search.toLowerCase()) ||
+      r.building.building_name.toLowerCase().includes(search.toLowerCase()) ||
+      r.facilities.some(f => f.facility_name.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleCloseInlineForm = () => {
@@ -154,6 +165,19 @@ export default function BookingResources({
                       <small className="text-muted">
                         {resource.resource_type.type_name}
                       </small>
+                      <small className="text-muted d-block">
+                        <i className="bi bi-geo-alt me-1"></i>
+                        {resource.building.building_name}, Floor {resource.floor_number}
+                      </small>
+                      {resource.facilities.length > 0 && (
+                        <div className="mt-1 d-flex flex-wrap gap-1">
+                          {resource.facilities.map((fac, idx) => (
+                            <span key={idx} className="badge bg-light text-dark border fw-normal" style={{ fontSize: '0.65em' }}>
+                              {fac.facility_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-1">
                         {available ? (
                           <span className="badge bg-success bg-opacity-10 text-success rounded-pill" style={{ fontSize: '0.7em' }}>
