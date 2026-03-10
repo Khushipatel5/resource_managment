@@ -2,6 +2,7 @@
 
 import { updateBookingStatus } from "@/lib/actions/bookings";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Booking = {
     booking_id: number;
@@ -14,12 +15,14 @@ type Booking = {
 
 export default function AdminBookingsClient({ bookings }: { bookings: Booking[] }) {
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
+    const router = useRouter();
 
     const handleUpdate = async (id: number, status: "APPROVED" | "REJECTED") => {
         if (!confirm(`Are you sure you want to force ${status} this booking?`)) return;
         setIsUpdating(id);
         await updateBookingStatus(id, status);
         setIsUpdating(null);
+        router.refresh();
     };
 
     return (
@@ -53,7 +56,7 @@ export default function AdminBookingsClient({ bookings }: { bookings: Booking[] 
                                     </td>
                                     <td>
                                         <span className={`badge rounded-pill ${booking.status === 'APPROVED' ? 'bg-success' :
-                                                booking.status === 'REJECTED' ? 'bg-danger' : 'bg-warning text-dark'
+                                            booking.status === 'REJECTED' ? 'bg-danger' : 'bg-warning text-dark'
                                             }`}>
                                             {booking.status}
                                         </span>

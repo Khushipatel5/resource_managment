@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateMaintenanceStatus } from "@/lib/actions/maintenance";
+import { useRouter } from "next/navigation";
 
 type Task = {
     maintenance_id: number;
@@ -17,6 +18,7 @@ type Task = {
 export default function MaintenanceTasks({ initialTasks }: { initialTasks: any[] }) {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [loadingId, setLoadingId] = useState<number | null>(null);
+    const router = useRouter();
 
     const handleUpdateStatus = async (taskId: number, newStatus: string) => {
         setLoadingId(taskId);
@@ -25,6 +27,7 @@ export default function MaintenanceTasks({ initialTasks }: { initialTasks: any[]
 
         if (res.success) {
             setTasks(tasks.map(t => t.maintenance_id === taskId ? { ...t, status: newStatus } : t));
+            router.refresh();
         }
     };
 

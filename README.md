@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resource Management System
 
-## Getting Started
+A comprehensive, real-time Resource Management application built with Next.js, React, and Prisma, designed to manage institutional block resources, facility bookings, user feedback, and maintenance tasks seamlessly.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Role-Based Access Control (RBAC)
+The system supports multiple distinct user roles, each with their own specialized dashboards and capabilities:
+
+- **Admin**: Complete overview of the system. Can manage users, alter roles, add/edit/delete resources, buildings, and resource types.
+- **Approver**: Dedicated portal to review, edit, approve, or reject student booking requests. Includes conflict-checking for resource availability.
+- **Staff / Maintenance**: Views and acts upon maintenance/repair tasks assigned by administrators based on student feedback.
+- **Student**: Can browse available resources, place booking requests (with strictly validated start/end times), and submit feedback/issues regarding specific resources.
+
+### ⚡ Real-Time Auto-Refresh
+No manual reloading required! The application features a global auto-refresh mechanism. Next.js server actions are combined with an `AutoRefresh` client component that seamlessly polls the server every 3 seconds to keep your browser perfectly in sync with the live database state.
+
+### 📅 Advanced Booking & Validation
+- **Conflict Prevention**: Approvers can instantly check if a requested time slot overlaps with an already-approved booking.
+- **Strict Time Validation**: Frontend and backend both strictly enforce that a booking's End Time must occur *after* the Start Time.
+
+### 🛠️ Maintenance & Feedback Loop
+- Students can submit issue tickets linked to specific resources.
+- Admins can convert these tickets into active Maintenance Tasks, categorize them (Repair, Cleaning, Inspection), and assign them to specific staff members.
+- Staff members can update task statuses (`PENDING`, `IN_PROGRESS`, `COMPLETED`), which automatically updates the student's original ticket.
+
+## 💻 Tech Stack
+
+- **Frontend**: Next.js (App Router), React 19, TypeScript, Bootstrap 5.
+- **Backend**: Next.js Server Actions, Node.js.
+- **Database**: PostgreSQL operated via Prisma ORM (`@prisma/client`).
+- **Security**: Authentication utilizing `bcrypt` & `jose` for secure routing and session handling.
+- **Styling**: Bootstrap and custom CSS modules.
+
+## 📂 Project Structure
+
+```
+├── app/
+│   ├── (auth)/             # Authenticated routes protected by middleware
+│   │   ├── admin/          # Admin dashboard & controls
+│   │   ├── approver/       # Booking approval workflow
+│   │   ├── staff/          # Maintenance task management
+│   │   └── student/        # Resource booking & feedback forms
+│   ├── (public)/           # Public routes (Login/Register)
+│   ├── api/                # API Routes (Auth handlers)
+│   └── layout.tsx          # Root layout housing the global AutoRefresh component
+├── components/
+│   ├── admin/              # Admin client components
+│   ├── approver/           # Approver client components
+│   ├── staff/              # Staff client components
+│   └── student/            # Student client components
+├── lib/
+│   └── actions/            # Next.js Server Actions (Database mutations)
+└── prisma/
+    └── schema.prisma       # Database schema definition
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🏗️ Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- PostgreSQL database
+- npm, yarn, or pnpm
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Installation
 
-## Learn More
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd resource_managment
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Environment Setup:**
+   Create a `.env` file in the root directory and configure your PostgreSQL database connection:
+   ```env
+   DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public"
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Initialize Database:**
+   Push the Prisma schema to your database and generate the client.
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
 
-## Deploy on Vercel
+5. **Seed the Database (Optional):**
+   ```bash
+   npm run seed
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+6. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+7. **Access the application:**
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📜 Database Schema Summary
+- **Users**: Authentication info and role mappings.
+- **Resources**: Target items available for booking (e.g., Labs, Equipment). Belongs to a specific Building and Resource Type.
+- **Buildings & Resource Types**: Classification models for organizational grouping.
+- **Bookings**: Tracks who booked what, when, and the approval status (`PENDING`, `APPROVED`, `REJECTED`).
+- **Feedback & Maintenance**: Links student reports tightly to actionable staff tasks.
+
+---
+
+*Developed using modern Next.js 15+ patterns for optimal performance and rapid real-time state synchronization.*

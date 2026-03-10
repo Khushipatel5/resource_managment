@@ -17,6 +17,10 @@ export async function createBooking(formData: FormData) {
     const start = new Date(startString);
     const end = new Date(endString);
 
+    if (end <= start) {
+        return { error: "End date and time must be after the start date and time." };
+    }
+
     try {
         await prisma.bookings.create({
             data: {
@@ -28,9 +32,9 @@ export async function createBooking(formData: FormData) {
             },
         });
 
-        revalidatePath("/student");
-        revalidatePath("/staff");
-        revalidatePath("/approver");
+        revalidatePath("/student", "layout");
+        revalidatePath("/staff", "layout");
+        revalidatePath("/approver", "layout");
         return { success: "Booking requested successfully!" };
     } catch (e) {
         console.error(e);
@@ -54,10 +58,10 @@ export async function updateBookingStatus(bookingId: number, status: "APPROVED" 
             },
         });
 
-        revalidatePath("/approver");
-        revalidatePath("/student");
-        revalidatePath("/staff");
-        revalidatePath("/admin");
+        revalidatePath("/approver", "layout");
+        revalidatePath("/student", "layout");
+        revalidatePath("/staff", "layout");
+        revalidatePath("/admin", "layout");
         return { success: `Booking ${status.toLowerCase()} successfully.` };
     } catch (e) {
         console.error(e);
@@ -69,6 +73,10 @@ export async function updateBookingDetails(bookingId: number, start: Date, end: 
     const user = await getCurrentUser();
     // Should verify role here
 
+    if (end <= start) {
+        return { error: "End date and time must be after the start date and time." };
+    }
+
     try {
         await prisma.bookings.update({
             where: { booking_id: bookingId },
@@ -78,7 +86,7 @@ export async function updateBookingDetails(bookingId: number, start: Date, end: 
             },
         });
 
-        revalidatePath("/approver");
+        revalidatePath("/approver", "layout");
         return { success: "Booking updated successfully." };
     } catch (e) {
         console.error(e);

@@ -2,6 +2,7 @@
 
 import { createResource } from "@/lib/actions/resources";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type ResourceType = {
     resource_type_id: number;
@@ -22,6 +23,7 @@ export default function AddResourceForm({
 }) {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -37,6 +39,7 @@ export default function AddResourceForm({
         } else if (res.success) {
             setMessage({ type: "success", text: res.success });
             (event.target as HTMLFormElement).reset();
+            router.refresh();
         }
     };
 

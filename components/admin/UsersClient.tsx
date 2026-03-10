@@ -2,6 +2,7 @@
 
 import { deleteUser, updateUserRole } from "@/lib/actions/users";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type User = {
     user_id: number;
@@ -12,15 +13,18 @@ type User = {
 
 export default function UsersClient({ users }: { users: User[] }) {
     const [editingId, setEditingId] = useState<number | null>(null);
+    const router = useRouter();
 
     const handleRoleChange = async (userId: number, newRole: string) => {
         await updateUserRole(userId, newRole);
         setEditingId(null);
+        router.refresh();
     };
 
     const handleDelete = async (userId: number) => {
         if (confirm("Are you sure you want to delete this user?")) {
             await deleteUser(userId);
+            router.refresh();
         }
     };
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createBooking } from "@/lib/actions/bookings";
+import { useRouter } from "next/navigation";
 
 type Resource = {
   resource_id: number;
@@ -47,6 +48,7 @@ export default function BookingResources({
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState("");
+  const router = useRouter();
 
   const handleBookClick = (resource: Resource) => {
     setSelectedResource(resource);
@@ -91,6 +93,17 @@ export default function BookingResources({
     setMessage(null);
 
     const formData = new FormData(event.currentTarget);
+    const startDateStr = formData.get("startDate") as string;
+    const endDateStr = formData.get("endDate") as string;
+
+    if (startDateStr && endDateStr) {
+      if (new Date(endDateStr) <= new Date(startDateStr)) {
+        setMessage({ type: "error", text: "End date and time must be after the start date and time." });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const res = await createBooking(formData);
 
     setIsSubmitting(false);
@@ -98,6 +111,7 @@ export default function BookingResources({
       setMessage({ type: "error", text: res.error });
     } else if (res.success) {
       setMessage({ type: "success", text: res.success });
+      router.refresh();
       // Close modal after short delay
       setTimeout(() => {
         if (trigger) {

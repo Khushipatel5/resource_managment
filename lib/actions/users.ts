@@ -13,7 +13,7 @@ export async function deleteUser(userId: number) {
             where: { user_id: userId },
         });
 
-        revalidatePath("/admin/users");
+        revalidatePath("/admin/users", "layout");
         return { success: "User deleted successfully" };
     } catch (e) {
         console.error(e);
@@ -30,7 +30,7 @@ export async function updateUserRole(userId: number, newRole: string) {
             data: { role: newRole },
         });
 
-        revalidatePath("/admin/users");
+        revalidatePath("/admin/users", "layout");
         return { success: "User role updated successfully" };
     } catch (e) {
         console.error(e);

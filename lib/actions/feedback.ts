@@ -24,7 +24,7 @@ export async function submitFeedback(message: string, resourceId?: number) {
             },
         });
 
-        revalidatePath("/student");
+        revalidatePath("/student", "layout");
         return { success: "Feedback submitted successfully" };
     } catch (e) {
         console.error(e);
@@ -106,8 +106,8 @@ export async function assignStaffToFeedback(
             data: { status: "ASSIGNED" },
         });
 
-        revalidatePath("/admin/feedbacks");
-        revalidatePath("/staff");
+        revalidatePath("/admin/feedbacks", "layout");
+        revalidatePath("/staff", "layout");
         return { success: "Staff assigned successfully" };
     } catch (e) {
         console.error(e);

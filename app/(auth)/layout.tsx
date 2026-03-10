@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
+import AutoRefresh from "@/components/AutoRefresh";
 
 // Simple cookie getter helper
 function getCookie(name: string) {
@@ -41,6 +42,7 @@ export default function AuthLayout({
 
     return (
         <div className="d-flex flex-column min-vh-100 bg-light">
+            <AutoRefresh />
             <Navbar role={role} handleLogout={handleLogout} />
 
             {/* Main Content */}

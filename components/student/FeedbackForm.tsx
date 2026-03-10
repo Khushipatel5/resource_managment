@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { submitFeedback } from "@/lib/actions/feedback";
+import { useRouter } from "next/navigation";
 
 export default function FeedbackForm({ resources }: { resources: { resource_id: number, resource_name: string }[] }) {
     const [message, setMessage] = useState("");
     const [resourceId, setResourceId] = useState<number | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ success?: string; error?: string } | null>(null);
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,6 +23,7 @@ export default function FeedbackForm({ resources }: { resources: { resource_id: 
             setStatus({ success: res.success });
             setMessage("");
             setResourceId(undefined);
+            router.refresh();
         } else {
             setStatus({ error: res.error });
         }

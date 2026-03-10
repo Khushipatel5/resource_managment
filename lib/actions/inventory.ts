@@ -10,7 +10,7 @@ export async function createResourceType(formData: FormData) {
     const name = formData.get("typeName") as string;
     try {
         await prisma.resource_types.create({ data: { type_name: name } });
-        revalidatePath("/admin/inventory");
+        revalidatePath("/admin/inventory", "layout");
         return { success: "Resource Type created" };
     } catch (e) { return { error: "Failed to create type" }; }
 }
@@ -19,7 +19,7 @@ export async function deleteResourceType(id: number) {
     await requireRole("ADMIN");
     try {
         await prisma.resource_types.delete({ where: { resource_type_id: id } });
-        revalidatePath("/admin/inventory");
+        revalidatePath("/admin/inventory", "layout");
         return { success: "Deleted" };
     } catch { return { error: "Failed (likely in use)" }; }
 }
@@ -35,7 +35,7 @@ export async function createBuilding(formData: FormData) {
         await prisma.buildings.create({
             data: { building_name: name, building_number: number, total_floors: floors }
         });
-        revalidatePath("/admin/inventory");
+        revalidatePath("/admin/inventory", "layout");
         return { success: "Building created" };
     } catch (e) { return { error: "Failed to create building" }; }
 }
@@ -44,7 +44,7 @@ export async function deleteBuilding(id: number) {
     await requireRole("ADMIN");
     try {
         await prisma.buildings.delete({ where: { building_id: id } });
-        revalidatePath("/admin/inventory");
+        revalidatePath("/admin/inventory", "layout");
         return { success: "Deleted" };
     } catch { return { error: "Failed (likely in use)" }; }
 }
@@ -64,7 +64,7 @@ export async function createCupboard(formData: FormData) {
         await prisma.cupboards.create({
             data: { cupboard_name: name, total_shelves: shelves, resource_id: resourceId }
         });
-        revalidatePath("/admin/inventory");
+        revalidatePath("/admin/inventory", "layout");
         return { success: "Cupboard created" };
     } catch (e) { return { error: "Failed to create cupboard" }; }
 }

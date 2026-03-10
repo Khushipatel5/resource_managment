@@ -2,6 +2,7 @@
 
 import { updateBookingStatus, checkAvailability, updateBookingDetails } from "@/lib/actions/bookings";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Booking = {
     booking_id: number;
@@ -35,11 +36,13 @@ export default function ApproverClient({
     // Edit Form State
     const [editStart, setEditStart] = useState("");
     const [editEnd, setEditEnd] = useState("");
+    const router = useRouter();
 
     const handleAction = async (bookingId: number, status: "APPROVED" | "REJECTED") => {
         setProcessingId(bookingId);
         await updateBookingStatus(bookingId, status);
         setProcessingId(null);
+        router.refresh();
     };
 
     const handleCheckAvailability = async (bookingId: number) => {
@@ -58,10 +61,16 @@ export default function ApproverClient({
     };
 
     const saveEditing = async (bookingId: number) => {
+        if (new Date(editEnd) <= new Date(editStart)) {
+            alert("End date and time must be after the start date and time.");
+            return;
+        }
+
         setProcessingId(bookingId);
         await updateBookingDetails(bookingId, new Date(editStart), new Date(editEnd));
         setEditingId(null);
         setProcessingId(null);
+        router.refresh();
         // Reset availability check since times changed
         setAvailabilityStatus(prev => {
             const newState = { ...prev };

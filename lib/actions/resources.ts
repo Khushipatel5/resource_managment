@@ -37,8 +37,8 @@ export async function createResource(formData: FormData) {
             }
         });
 
-        revalidatePath("/admin/AddResources");
-        revalidatePath("/student"); // Update student view as well
+        revalidatePath("/admin/AddResources", "layout");
+        revalidatePath("/student", "layout"); // Update student view as well
         return { success: "Resource created successfully" };
     } catch (error) {
         console.error("Failed to create resource:", error);

@@ -40,9 +40,9 @@ export async function updateMaintenanceStatus(maintenanceId: number, status: str
             });
         }
 
-        revalidatePath("/maintainence"); // Kept for legacy if redirected
-        revalidatePath("/staff");
-        revalidatePath("/admin");
+        revalidatePath("/maintainence", "layout"); // Kept for legacy if redirected
+        revalidatePath("/staff", "layout");
+        revalidatePath("/admin", "layout");
         return { success: "Status updated successfully" };
     } catch (e) {
         console.error(e);

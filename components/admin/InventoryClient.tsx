@@ -2,6 +2,7 @@
 
 import { createResourceType, deleteResourceType, createBuilding, deleteBuilding } from "@/lib/actions/inventory";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function InventoryClient({
     types,
@@ -12,6 +13,7 @@ export default function InventoryClient({
 }) {
     const [activeTab, setActiveTab] = useState<'types' | 'buildings'>('types');
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     async function handleCreateType(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -20,6 +22,7 @@ export default function InventoryClient({
         await createResourceType(formData);
         (e.target as HTMLFormElement).reset();
         setLoading(false);
+        router.refresh();
     }
 
     async function handleCreateBuilding(e: React.FormEvent<HTMLFormElement>) {
@@ -29,6 +32,21 @@ export default function InventoryClient({
         await createBuilding(formData);
         (e.target as HTMLFormElement).reset();
         setLoading(false);
+        router.refresh();
+    }
+
+    async function handleDeleteType(id: number) {
+        setLoading(true);
+        await deleteResourceType(id);
+        setLoading(false);
+        router.refresh();
+    }
+
+    async function handleDeleteBuilding(id: number) {
+        setLoading(true);
+        await deleteBuilding(id);
+        setLoading(false);
+        router.refresh();
     }
 
     return (
@@ -67,7 +85,7 @@ export default function InventoryClient({
                             {types.map(t => (
                                 <li key={t.resource_type_id} className="list-group-item d-flex justify-content-between align-items-center">
                                     {t.type_name}
-                                    <button onClick={() => deleteResourceType(t.resource_type_id)} className="btn btn-sm btn-outline-danger border-0">
+                                    <button onClick={() => handleDeleteType(t.resource_type_id)} className="btn btn-sm btn-outline-danger border-0">
                                         <i className="bi bi-trash"></i>
                                     </button>
                                 </li>
@@ -108,7 +126,7 @@ export default function InventoryClient({
                                             <td>{b.building_number}</td>
                                             <td>{b.total_floors}</td>
                                             <td>
-                                                <button onClick={() => deleteBuilding(b.building_id)} className="btn btn-sm btn-outline-danger border-0">
+                                                <button onClick={() => handleDeleteBuilding(b.building_id)} className="btn btn-sm btn-outline-danger border-0">
                                                     <i className="bi bi-trash"></i>
                                                 </button>
                                             </td>
