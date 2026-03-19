@@ -110,4 +110,3 @@ No manual reloading required! The application features a global auto-refresh mec
 
 ---
 
-*Developed using modern Next.js 15+ patterns for optimal performance and rapid real-time state synchronization.*
