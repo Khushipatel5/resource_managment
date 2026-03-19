@@ -141,7 +141,6 @@ export default function RegisterPage() {
               >
                 <option value="STUDENT">Student</option>
                 <option value="STAFF">Staff</option>
-                {/* <option value="ADMIN">Admin</option> */}
                 <option value="APPROVER">Approver</option>
               </select>
               <label htmlFor="floatingRole">I am a...</label>
